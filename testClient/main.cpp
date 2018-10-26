@@ -12,87 +12,77 @@
 #define BUF_SIZE 1024
 #define NUM_THREADS 5
 
-//struktura zawierająca dane, które zostaną przekazane do wątku
-struct thread_data_t {
-    int cfd;
+struct ThreadData {
+    int connectstionSocketDescriptor;
 };
 
-//wskaźnik na funkcję opisującą zachowanie wątku
-void *ThreadBehavior(void *t_data) {
+void *ThreadBehavior(void *threadData) {
     char buf[7];
-    struct thread_data_t *th_data = (struct thread_data_t *) t_data;
-    //dostęp do pól struktury: (*th_data).pole
-    //TODO (przy zadaniu 1) klawiatura -> wysyłanie albo odbieranie -> wyświetlanie
+    struct ThreadData *threadData = (struct ThreadData *) threadData;
     while (1) {
-        read(th_data->cfd, buf, 7);
-        printf("Serwer: %s\n", buf);
+        read(threadData->connectstionSocketDescriptor, buf, 7);
+        printf("Server: %s\n", buf);
     }
     pthread_exit(NULL);
 }
 
 
-//funkcja obsługująca połączenie z serwerem
-void handleConnection(int connection_socket_descriptor) {
-    //wynik funkcji tworzącej wątek
-    int create_result = 0;
-    //uchwyt na wątek
-    pthread_t thread1;
+void handleConnection(int connectionSocketDescriptor) {
+    int createResult = 0;
+    pthread_t thread;
     char buf[7];
-    //dane, które zostaną przekazane do wątku
-    struct thread_data_t t_data;
-    t_data.cfd = connection_socket_descriptor;
+    struct ThreadData threadData;
+    threadData.connectstionSocketDescriptor = connectionSocketDescriptor;
 
-    create_result = pthread_create(&thread1, NULL, ThreadBehavior, (void *) &t_data);
-    if (create_result) {
-        printf("1 Błąd przy próbie utworzenia wątku, kod błędu: %d\n", create_result);
+    createResult = pthread_create(&thread, NULL, ThreadBehavior, (void *) &threadData);
+    if (createResult) {
+        printf("1 Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createResult);
         exit(-1);
     }
     while (1) {
         fgets(buf, 7, stdin);
-        write(connection_socket_descriptor, buf, 7);
+        write(connectionSocketDescriptor, buf, 7);
     }
-    pthread_detach(thread1);
-    //TODO (przy zadaniu 1) odbieranie -> wyświetlanie albo klawiatura -> wysyłanie
+    pthread_detach(thread);
 }
 
 
 int main(int argc, char *argv[]) {
-    int connection_socket_descriptor;
-    int connect_result;
-    struct sockaddr_in server_address;
-    struct hostent *server_host_entity;
+    int connectionSocketDescriptor;
+    int connectResult;
+    struct sockaddr_in serverAddress;
+    struct hostent *serverHostEntity;
 
     if (argc != 3) {
         fprintf(stderr, "Sposób użycia: %s server_name port_number\n", argv[0]);
         exit(1);
     }
 
-    server_host_entity = gethostbyname(argv[1]);
-    if (!server_host_entity) {
+    serverHostEntity = gethostbyname(argv[1]);
+    if (!serverHostEntity) {
         fprintf(stderr, "%s: Nie można uzyskać adresu IP serwera.\n", argv[0]);
         exit(1);
     }
 
-    connection_socket_descriptor = socket(PF_INET, SOCK_STREAM, 0);
-    if (connection_socket_descriptor < 0) {
+    connectionSocketDescriptor = socket(PF_INET, SOCK_STREAM, 0);
+    if (connectionSocketDescriptor < 0) {
         fprintf(stderr, "%s: Błąd przy probie utworzenia gniazda.\n", argv[0]);
         exit(1);
     }
 
-    memset(&server_address, 0, sizeof(struct sockaddr));
-    server_address.sin_family = AF_INET;
-    memcpy(&server_address.sin_addr.s_addr, server_host_entity->h_addr, server_host_entity->h_length);
-    server_address.sin_port = htons(atoi(argv[2]));
-    connect_result = connect(connection_socket_descriptor, (struct sockaddr *) &server_address,
-                             sizeof(struct sockaddr));
-    if (connect_result < 0) {
+    memset(&serverAddress, 0, sizeof(struct sockaddr));
+    serverAddress.sin_family = AF_INET;
+    memcpy(&serverAddress.sin_addr.s_addr, serverHostEntity->h_addr, serverHostEntity->h_length);
+    serverAddress.sin_port = htons(atoi(argv[2]));
+    connectResult = connect(connectionSocketDescriptor, (struct sockaddr *) &serverAddress, sizeof(struct sockaddr));
+    if (connectResult < 0) {
         fprintf(stderr, "%s: Błąd przy próbie połączenia z serwerem (%s:%i).\n", argv[0], argv[1], atoi(argv[2]));
         exit(1);
     }
 
-    handleConnection(connection_socket_descriptor);
+    handleConnection(connectionSocketDescriptor);
 
-    close(connection_socket_descriptor);
+    close(connectionSocketDescriptor);
     return 0;
 
 }
