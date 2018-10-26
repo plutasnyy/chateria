@@ -11,55 +11,34 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <thread>
+#include "ThreadData.h"
 
 #define SERVER_PORT 8000
 #define QUEUE_SIZE 5
 
-struct ThreadData {
-    int connectionSocketDescriptor;
-};
+using namespace std;
 
-void sendMessage(int connectionSocketDescriptor);
-
-void *ThreadReadBehavior(void *tData) {
+void threadReadBehavior(ThreadData threadData) {
     char buf[7];
-    pthread_detach(pthread_self());
-    auto *threadData = (struct ThreadData *) tData;
     while (1) {
-        read(threadData->connectionSocketDescriptor, buf, 7);
+        read(threadData.getConnectionSocketDescriptor(), buf, 7);
         printf("Received: %s\n", buf);
     }
-    pthread_exit(NULL);
 }
 
-void *ThreadWriteBehavior(void *tData) {
-    pthread_detach(pthread_self());
-    auto *threadData = (struct ThreadData *) tData;
-    write(threadData->connectionSocketDescriptor, "OK", 7);
-    pthread_exit(NULL);
+void threadWriteBehavior(ThreadData threadData) {
+    write(threadData.getConnectionSocketDescriptor(), "OK", 7);
 }
 
 void handleConnection(int connectionSocketDescriptor) {
-    int createReadThreadResult = 0, createWriteThreadResult = 0;
-    pthread_t thread;
+    thread threads[2];
+    auto threadData = ThreadData(connectionSocketDescriptor);
 
-    auto *tData = (ThreadData *) malloc(sizeof(struct ThreadData));
-    tData->connectionSocketDescriptor = connectionSocketDescriptor;
+    threads[0] = thread(threadWriteBehavior, threadData);
+    threads[1] = thread(threadReadBehavior, threadData);
 
-    createReadThreadResult = pthread_create(&thread, NULL, ThreadReadBehavior, (void *) tData);
-    if (createReadThreadResult) {
-        printf("Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createReadThreadResult);
-        exit(-1);
-    }
-
-    createWriteThreadResult = pthread_create(&thread, NULL, ThreadWriteBehavior, (void *) tData);
-    if (createWriteThreadResult) {
-        printf("Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createWriteThreadResult);
-        exit(-1);
-    }
-
-    free(tData);
-
+    for (auto& th : threads) th.join();
 }
 
 int main(int argc, char *argv[]) {
