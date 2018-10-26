@@ -21,7 +21,7 @@ struct ThreadData {
 
 void sendMessage(int connectionSocketDescriptor);
 
-void *ThreadBehavior(void *tData) {
+void *ThreadReadBehavior(void *tData) {
     char buf[7];
     pthread_detach(pthread_self());
     auto *threadData = (struct ThreadData *) tData;
@@ -32,28 +32,34 @@ void *ThreadBehavior(void *tData) {
     pthread_exit(NULL);
 }
 
+void *ThreadWriteBehavior(void *tData) {
+    pthread_detach(pthread_self());
+    auto *threadData = (struct ThreadData *) tData;
+    write(threadData->connectionSocketDescriptor, "OK", 7);
+    pthread_exit(NULL);
+}
+
 void handleConnection(int connectionSocketDescriptor) {
-    int createResult = 0;
+    int createReadThreadResult = 0, createWriteThreadResult = 0;
     pthread_t thread;
 
     auto *tData = (ThreadData *) malloc(sizeof(struct ThreadData));
     tData->connectionSocketDescriptor = connectionSocketDescriptor;
 
-    createResult = pthread_create(&thread, NULL, ThreadBehavior, (void *) tData);
-    if (createResult) {
-        printf("Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createResult);
+    createReadThreadResult = pthread_create(&thread, NULL, ThreadReadBehavior, (void *) tData);
+    if (createReadThreadResult) {
+        printf("Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createReadThreadResult);
         exit(-1);
     }
 
-    sendMessage(connectionSocketDescriptor);
-}
-
-void sendMessage(int connectionSocketDescriptor) {
-    char buf[7];
-    while (1) {
-        fgets(buf, 7, stdin);
-        write(connectionSocketDescriptor, buf, 7);
+    createWriteThreadResult = pthread_create(&thread, NULL, ThreadWriteBehavior, (void *) tData);
+    if (createWriteThreadResult) {
+        printf("Błąd przy próbie utworzenia wątku, kod błędu: %d\n", createWriteThreadResult);
+        exit(-1);
     }
+
+    free(tData);
+
 }
 
 int main(int argc, char *argv[]) {

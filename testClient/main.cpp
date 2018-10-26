@@ -16,9 +16,9 @@ struct ThreadData {
     int connectstionSocketDescriptor;
 };
 
-void *ThreadBehavior(void *threadData) {
+void *ThreadBehavior(void *tData) {
     char buf[7];
-    struct ThreadData *threadData = (struct ThreadData *) threadData;
+    struct ThreadData *threadData = (struct ThreadData *) tData;
     while (1) {
         read(threadData->connectstionSocketDescriptor, buf, 7);
         printf("Server: %s\n", buf);
