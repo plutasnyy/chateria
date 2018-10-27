@@ -12,36 +12,79 @@
 #include <time.h>
 #include <pthread.h>
 #include <thread>
+#include <condition_variable>
+#include <time.h>
 #include "ThreadData.h"
+#include "GlobalData.h"
 
 #define SERVER_PORT 8000
 #define QUEUE_SIZE 5
 
 using namespace std;
 
-void threadReadBehavior(ThreadData threadData) {
+GlobalData globalData = GlobalData();
+std::mutex mtx;
+std::condition_variable cv;
+
+void threadReadFromUserBehavior(ThreadData threadData) {
+
+    printf("Start thread \n");
     char buf[7];
     while (1) {
+        printf("After sleep\n");
         read(threadData.getConnectionSocketDescriptor(), buf, 7);
         printf("Received: %s\n", buf);
+        string msg(buf);
+        globalData.setNewMessage(msg, threadData.getRoomId());
+        cv.notify_all();
+        printf("Sended\n");
     }
+
+}
+
+void threadReadFromServerBehavior(ThreadData threadData) {
+    char buf[7];
+    string msg;
+    while (1) {
+        printf("Loop start\n");
+        unique_lock<mutex> lck(mtx);
+        printf("Unique lock\n");
+        cv.wait(lck);
+        printf("Unlocked\n");
+        globalData.getNewMessage();
+//        for(int i=0;i<2;i++){
+//            buf[i] = msg[i];
+//        }
+        printf("Message prepared\n");
+        write(threadData.getConnectionSocketDescriptor(), "NEW", 7);
+        printf("Message sended\n");
+    }
+
 }
 
 void threadWriteBehavior(ThreadData threadData) {
     write(threadData.getConnectionSocketDescriptor(), "OK", 7);
+    sleep(10000);
 }
 
 void handleConnection(int connectionSocketDescriptor) {
-    thread threads[2];
+    thread threads[3];
     auto threadData = ThreadData(connectionSocketDescriptor);
-
+    int roomId = rand() % 1000;
+    printf("****** New room ID: %d ****** \n", roomId);
+    globalData.addRoomId(roomId);
+    threadData.setRoomId(roomId);
+    globalData.addClient();
     threads[0] = thread(threadWriteBehavior, threadData);
-    threads[1] = thread(threadReadBehavior, threadData);
+    threads[1] = thread(threadReadFromUserBehavior, threadData);
+    threads[2] = thread(threadReadFromServerBehavior, threadData);
 
-    for (auto& th : threads) th.join();
+    for (auto &th : threads) th.detach();
 }
 
 int main(int argc, char *argv[]) {
+
+    srand(time(NULL));
     int serverSocketDescriptor;
     int connectionSocketDescriptor;
     int bindResult;
@@ -74,6 +117,7 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
+        printf("Zaczynam nasluchiwanie:\n");
         connectionSocketDescriptor = accept(serverSocketDescriptor, NULL, NULL);
         if (connectionSocketDescriptor < 0) {
             fprintf(stderr, "%s: Błąd przy próbie utworzenia gniazda dla połączenia.\n", argv[0]);
