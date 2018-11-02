@@ -1,75 +1,39 @@
 #include <algorithm>
 #include "GlobalData.h"
 
-string &GlobalData::getNewMessage() {
-    printf("I want get message\n");
-    string tempMessage;
-    processingGlobalData.lock();
-    quantityOfWaitingClients--;
-    tempMessage = newMessage;
-    printf("MESSAGES TO RECEIVE %d\n", quantityOfWaitingClients);
-    if(quantityOfWaitingClients == 0 ){
-        sendingMessage.unlock();
-    }
-    processingGlobalData.unlock();
-    printf("Message returned\n");
-    return tempMessage;
-}
-
-void GlobalData::setNewMessage(const string &newMessage, const int &roomIdForNewMessage) {
-    printf("I want set message \n");
-    processingGlobalData.lock();
-    printf("PROCESSING LOCK\n");
-    sendingMessage.lock();
-    printf("SENDING MESSAGE LOCK \n");
-    quantityOfWaitingClients = quantityOfClients;
-    this->roomIdForNewMessage = roomIdForNewMessage;
-    GlobalData::newMessage = newMessage;
-    processingGlobalData.unlock();
-    printf("Message set\n");
-}
-
-int GlobalData::getRoomIdForNewMessage() {
-    int tempRoomId;
-    processingGlobalData.lock();
-    tempRoomId = roomIdForNewMessage;
-    processingGlobalData.unlock();
-    return tempRoomId;
-}
-
-const list<int> &GlobalData::getRoomsId() {
-    list<int> tempRoomsId;
-    processingGlobalData.lock();
-    tempRoomsId = roomsId;
-    processingGlobalData.unlock();
-    return roomsId;
-}
-
-void GlobalData::addRoomId(const int &roomsId) {
-    printf("Add room id\n");
-    processingGlobalData.lock();
-    sendingMessage.lock();
-    GlobalData::roomsId.push_back(roomsId);
-    sendingMessage.unlock();
-    processingGlobalData.unlock();
-    printf("Added room id\n");
-}
-
 bool GlobalData::isExistingRoom(const int &id) {
-    return find(roomsId.begin(), roomsId.end(), id) != roomsId.end();
+    return roomIdToConnectionDescriptorsMap.find(id) != roomIdToConnectionDescriptorsMap.end();
 }
 
-GlobalData::GlobalData() {
-    quantityOfClients = 0;
-    newMessage = "";
-}
-
-void GlobalData::addClient() {
+void GlobalData::addClient(int clientConnectionDescriptor, int roomId) {
     printf("Add client\n");
     processingGlobalData.lock();
     sendingMessage.lock();
-    quantityOfClients++;
+    if (isExistingRoom(roomId)) {
+        roomIdToConnectionDescriptorsMap[roomId].push_back(clientConnectionDescriptor);
+    } else {
+        list<int> newList;
+        newList.push_back(clientConnectionDescriptor);
+        roomIdToConnectionDescriptorsMap[roomId] = list<int>(newList);
+    }
     sendingMessage.unlock();
     processingGlobalData.unlock();
     printf("Client was added\n");
+}
+
+list<int> GlobalData::getConnectionSocketDescriptors(int roomId) {
+    list<int> tempList;
+    processingGlobalData.lock();
+    tempList = roomIdToConnectionDescriptorsMap[roomId];
+    processingGlobalData.unlock();
+    printf("Returned %d descriptors\n", static_cast<int>(tempList.size()));
+    return tempList;
+}
+
+void GlobalData::endSendingMessage() {
+    processingGlobalData.lock();
+    sendingMessage.unlock();
+    printf("SENDING MESSAGE UNLOCK \n");
+    processingGlobalData.unlock();
+    printf("Message sended\n");
 }
