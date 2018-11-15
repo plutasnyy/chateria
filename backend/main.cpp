@@ -14,6 +14,7 @@
 #include <thread>
 #include <condition_variable>
 #include <time.h>
+#include <sstream>
 #include "ThreadData.h"
 #include "GlobalData.h"
 
@@ -23,61 +24,50 @@
 using namespace std;
 
 GlobalData globalData = GlobalData();
-std::mutex mtx;
-std::condition_variable cv;
+
+void sendMessageForRoom(string msg, int roomId) {
+    printf("New thread to send message for %d\n", roomId);
+    const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomId);
+    for (int clientDescriptor : clientDescriptorsList) {
+        write(clientDescriptor, "NEW", 7);
+    }
+    globalData.endSendingMessage();
+}
 
 void threadReadFromUserBehavior(ThreadData threadData) {
-
     printf("Start thread \n");
     char buf[7];
     while (1) {
-        printf("After sleep\n");
+        printf("While\n");
         read(threadData.getConnectionSocketDescriptor(), buf, 7);
         printf("Received: %s\n", buf);
-        string msg(buf);
-        globalData.setNewMessage(msg, threadData.getRoomId());
-        cv.notify_all();
-        printf("Sended\n");
-    }
-
-}
-
-void threadReadFromServerBehavior(ThreadData threadData) {
-    char buf[7];
-    string msg;
-    while (1) {
-        printf("Loop start\n");
-        unique_lock<mutex> lck(mtx);
-        printf("Unique lock\n");
-        cv.wait(lck);
-        printf("Unlocked\n");
-        globalData.getNewMessage();
-//        for(int i=0;i<2;i++){
-//            buf[i] = msg[i];
-//        }
-        printf("Message prepared\n");
-        write(threadData.getConnectionSocketDescriptor(), "NEW", 7);
-        printf("Message sended\n");
+        thread sendMessageThread;
+        //string msg(buf);
+        sendMessageThread = thread(sendMessageForRoom, "AA12", threadData.getRoomId());
+        sendMessageThread.detach();
     }
 
 }
 
 void threadWriteBehavior(ThreadData threadData) {
-    write(threadData.getConnectionSocketDescriptor(), "OK", 7);
-    sleep(10000);
+    char x[7];
+    x[0] = 'O';
+    x[1] = 'K';
+    x[2] = static_cast<char>(threadData.getRoomId() + '0');
+    x[3] = '.';
+    write(threadData.getConnectionSocketDescriptor(), x, 7);
 }
 
 void handleConnection(int connectionSocketDescriptor) {
-    thread threads[3];
+    thread threads[2];
     auto threadData = ThreadData(connectionSocketDescriptor);
-    int roomId = rand() % 1000;
-    printf("****** New room ID: %d ****** \n", roomId);
-    globalData.addRoomId(roomId);
+    int roomId = rand() % 2;
     threadData.setRoomId(roomId);
-    globalData.addClient();
+    printf("****** New room ID: %d ****** \n", roomId);
+
+    globalData.addClient(connectionSocketDescriptor, roomId);
     threads[0] = thread(threadWriteBehavior, threadData);
     threads[1] = thread(threadReadFromUserBehavior, threadData);
-    threads[2] = thread(threadReadFromServerBehavior, threadData);
 
     for (auto &th : threads) th.detach();
 }
@@ -123,7 +113,6 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "%s: Błąd przy próbie utworzenia gniazda dla połączenia.\n", argv[0]);
             exit(1);
         }
-
         handleConnection(connectionSocketDescriptor);
     }
 
