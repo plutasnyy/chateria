@@ -4,34 +4,22 @@
 #include <string>
 #include <list>
 #include <mutex>
+#include <map>
 
 using namespace std;
 
 class GlobalData {
 public:
-    string &getNewMessage();
+    void addClient(int clientConnectionDescriptor, int roomId);
 
-    void setNewMessage(const string &newMessage, const int &roomIdForNewMessage);
+    list<int> getConnectionSocketDescriptors(int roomId);
 
-    int getRoomIdForNewMessage();
-
-    GlobalData();
-
-    const list<int> &getRoomsId();
-
-    void addRoomId(const int &roomsId);
-
-    bool isExistingRoom(const int &id);
-
-    void addClient();
+    void endSendingMessage();
 
 private:
-    int roomIdForNewMessage;
-    int quantityOfClients;
-    int quantityOfWaitingClients;
+    bool isExistingRoom(const int &id);
     mutex processingGlobalData, sendingMessage;
-    string newMessage;
-    list<int> roomsId;
+    map<int,list<int>> roomIdToConnectionDescriptorsMap;
 
 };
 
