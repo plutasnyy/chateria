@@ -19,6 +19,8 @@ struct ThreadData {
 void *ThreadBehavior(void *tData) {
     char buf[7];
     struct ThreadData *threadData = (struct ThreadData *) tData;
+    char *x = "Sec-WebSocket-Key: /AfqEuGkY46HcgmI7dOS/Q==";
+    write(threadData->connectstionSocketDescriptor, x, strlen(x));
     while (1) {
         read(threadData->connectstionSocketDescriptor, buf, 7);
         printf("Server: %s\n", buf);

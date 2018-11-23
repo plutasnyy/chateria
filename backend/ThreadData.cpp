@@ -17,3 +17,11 @@ int ThreadData::getRoomId() const {
 void ThreadData::setRoomId(int roomId) {
     ThreadData::roomId = roomId;
 }
+
+const string &ThreadData::getThreadMessage() const {
+    return threadMessage;
+}
+
+void ThreadData::setThreadMessage(const string &threadMessage) {
+    ThreadData::threadMessage = threadMessage;
+}
