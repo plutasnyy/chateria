@@ -37,3 +37,36 @@ void GlobalData::endSendingMessage() {
     processingGlobalData.unlock();
     printf("Message sended\n");
 }
+
+void GlobalData::startSendingMessage() {
+    processingGlobalData.lock();
+    sendingMessage.lock();
+    printf("SENDING MESSAGE LOCK \n");
+    processingGlobalData.unlock();
+}
+
+const map<string, int> &GlobalData::getRoomNameToIdMap() const {
+    return roomNameToIdMap;
+}
+
+void GlobalData::setRoomNameToIdMap(const map<string, int> &roomNameToIdMap) {
+    GlobalData::roomNameToIdMap = roomNameToIdMap;
+}
+
+const map<int, string> &GlobalData::getRoomIdToNameMap() const {
+    return roomIdToNameMap;
+}
+
+void GlobalData::setRoomIdToNameMap(const map<int, string> &roomIdToNameMap) {
+    GlobalData::roomIdToNameMap = roomIdToNameMap;
+}
+
+list<string> GlobalData::getActivesRoomsNames() {
+    list<string> result;
+    for(const auto& kv:this->roomIdToConnectionDescriptorsMap){
+        if(!kv.second.empty()){
+            result.push_back(this->roomIdToNameMap[kv.first]);
+        }
+    }
+    return result;
+}

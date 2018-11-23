@@ -1,6 +1,9 @@
 #ifndef BACKEND_THREADDATA_H
 #define BACKEND_THREADDATA_H
 
+#include <string>
+
+using namespace std;
 
 class ThreadData {
 public:
@@ -17,6 +20,13 @@ public:
 private:
     int connectionSocketDescriptor;
     int roomId;
+public:
+    const string &getThreadMessage() const;
+
+    void setThreadMessage(const string &threadMessage);
+
+private:
+    string threadMessage;
 
 };
 

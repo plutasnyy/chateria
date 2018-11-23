@@ -23,6 +23,8 @@
 #include "GlobalData.h"
 #include "Base64.h"
 #include "WebsocketContent.h"
+#include "json.hpp"
+
 
 #define SERVER_PORT 8000
 #define QUEUE_SIZE 5
@@ -30,8 +32,15 @@
 #define BUF_SIZE 2048
 
 using namespace std;
+using json = nlohmann::json;
 
 GlobalData globalData = GlobalData();
+
+void doHandshake(int descriptor);
+
+string getMessageFromEncodedBuffer(char *buffer);
+
+void processThreadMessage(string basic_string, ThreadData data);
 
 void sendMessageForRoom(string msg, int roomId) {
     printf("New thread to send message for %d\n", roomId);
@@ -42,15 +51,75 @@ void sendMessageForRoom(string msg, int roomId) {
     globalData.endSendingMessage();
 }
 
+void sendMessageForUser(string msg, int connectionSocketDescriptor){
+    globalData.startSendingMessage();
+    write(connectionSocketDescriptor, msg.c_str(), msg.size());
+    globalData.endSendingMessage();
+}
+
+void processMessage(char *readMessageBuffer, ThreadData threadData) {
+    string message = getMessageFromEncodedBuffer(readMessageBuffer);
+    string fullMessage = threadData.getThreadMessage();
+    for(char& c : message) {
+        if(1 == c) {
+            processThreadMessage(fullMessage, threadData);
+            threadData.setThreadMessage("");
+            return;
+        }
+        fullMessage += c;
+    }
+    threadData.setThreadMessage(fullMessage);
+}
+
+void processThreadMessage(string threadMessage, ThreadData threadData) {
+    json receivedJson = json::parse(threadMessage);
+    string action = receivedJson.at("action");
+    if(action == "GET_ROOMS"){
+        json msg, rooms(globalData.getActivesRoomsNames());
+        msg["action"]= "ROOM_LIST";
+        msg["roomList"] = rooms;
+        sendMessageForUser(msg.dump(),threadData.getConnectionSocketDescriptor());
+    }
+}
+
+string getMessageFromEncodedBuffer(char *readMessageBuffer) {
+    unsigned char *encryptedIncommingMessageBuffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
+    memset(encryptedIncommingMessageBuffer, 0, sizeof encryptedIncommingMessageBuffer);
+    websocketGetContent(readMessageBuffer, BUF_SIZE, encryptedIncommingMessageBuffer, BUF_SIZE);
+    string decodedMessage(reinterpret_cast<char *>(encryptedIncommingMessageBuffer));
+    int size = 0;
+    for(char& c : decodedMessage) {
+        size++;
+        if(1 == c) break;
+    }
+    return decodedMessage.substr(0,size);
+}
+
 void threadReadFromUserBehavior(ThreadData threadData) {
     cout << "Started reading thread\n";
-    char *buffer = new char[BUF_SIZE];
-    char *buffer3 = "SIEMANKO NOWA WIADOMOSC";
-    unsigned char *buffer2 = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
-    char *buffer4 = new char[BUF_SIZE];
-    unsigned char *buffer5 = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
     int desc = threadData.getConnectionSocketDescriptor();
-    read(desc, buffer, BUF_SIZE);
+    char *readMessageBuffer = new char[BUF_SIZE];
+    while (1) {
+        read(desc, readMessageBuffer, BUF_SIZE);
+        printf("Received: \n*************START****************\n%s\n*************END****************\n", readMessageBuffer);
+        processMessage(readMessageBuffer, threadData);
+    }
+}
+
+void handleConnection(int connectionSocketDescriptor) {
+    cout << "Handle connection for: " << connectionSocketDescriptor << endl;
+    doHandshake(connectionSocketDescriptor);
+    thread threads[1];
+    auto threadData = ThreadData(connectionSocketDescriptor);
+    int roomId = -1;
+    globalData.addClient(connectionSocketDescriptor, roomId);
+    threads[0] = thread(threadReadFromUserBehavior, threadData);
+    threads[0].join();
+}
+
+void doHandshake(int connectionSocketDescriptor) {
+    char *buffer = new char[BUF_SIZE];
+    read(connectionSocketDescriptor, buffer, BUF_SIZE);
     printf("Received: %s\n*************END****************\n", buffer);
     string handshakeMessage = buffer;
     string findString = "Sec-WebSocket-Key: ";
@@ -61,37 +130,11 @@ void threadReadFromUserBehavior(ThreadData threadData) {
                            "Upgrade: websocket\r\n"
                            "Connection: Upgrade\r\n"
                            "Sec-WebSocket-Accept: " + encodeAcceptKey(key) + "\r\n\r\n";
-    string returnMessage2 = "dupa " + returnMessage;
-    cout << returnMessage << endl;
-    write(desc, returnMessage.c_str(), returnMessage.size());
-    sleep(2);
-    cout<<"WYSYLAM"<<endl;
-    websocketSetContent(buffer3, strlen(buffer3), buffer2, BUF_SIZE);
-    write(desc, buffer2, BUF_SIZE);
-    while (1) {
-        read(desc, buffer4, BUF_SIZE);
-        printf("Received: %s\n*************END****************\n", buffer4);
-        websocketGetContent(buffer4, BUF_SIZE, buffer5, BUF_SIZE);
-        cout<< buffer5 <<endl;
-        //thread sendMessageThread;
-        //string msg(buf);
-        // sendMessageThread = thread(sendMessageForRoom, "AA12", threadData.getRoomId());
-        // sendMessageThread.detach();
-    }
-}
-
-void handleConnection(int connectionSocketDescriptor) {
-    cout << "Handle connection for: " << connectionSocketDescriptor << endl;
-    thread threads[1];
-    auto threadData = ThreadData(connectionSocketDescriptor);
-    int roomId = -1;
-    globalData.addClient(connectionSocketDescriptor, roomId);
-    threads[0] = thread(threadReadFromUserBehavior, threadData);
-    threads[0].join();
+    cout << "Send: " << returnMessage << endl;
+    write(connectionSocketDescriptor, returnMessage.c_str(), returnMessage.size());
 }
 
 int main(int argc, char *argv[]) {
-//    cout<< encodeAcceptKey("jyhRMwvMcQHoJ+6ng45kIg==");
     srand(time(NULL));
     int serverSocketDescriptor;
     int connectionSocketDescriptor;

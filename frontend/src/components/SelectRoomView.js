@@ -75,14 +75,13 @@ class SelectRoomView extends React.Component {
 
     sendMessage(message) {
         let x = JSON.stringify({
-            'x':1
+            'action':'GET_ROOMS'
         })
+        x+= String.fromCharCode(1);
         console.log("wysylam"+x);
         this.refWebsocket.sendMessage(x);
     }
-
-
-
+    
 
     render() {
         let websocketUrl = 'ws://localhost:8000'; // localStorage.getItem("ip");
