@@ -91,6 +91,11 @@ void processThreadMessage(string threadMessage, ThreadData threadData) {
         msg["roomList"] = rooms;
         thread thread(sendMessageForUser,msg.dump(), threadData.getConnectionSocketDescriptor());
         thread.detach();
+    } else if (action == "CLOSE") {
+        threadData.setToClose();
+    }else if (action == "EXIT_ROOM") {
+        threadData.setToClose();
+    }else if (action == "MESSAGE") {
     }
 }
 
@@ -117,6 +122,7 @@ void threadReadFromUserBehavior(ThreadData threadData) {
         printf("Received: \n*************START****************\n%s\n*************END****************\n",
                readMessageBuffer);
         processMessage(readMessageBuffer, threadData);
+        if(threadData.isToClose()) break;
         i++;
         if (i > 4)break;
     }
@@ -125,12 +131,9 @@ void threadReadFromUserBehavior(ThreadData threadData) {
 void handleConnection(int connectionSocketDescriptor) {
     cout << "Handle connection for: " << connectionSocketDescriptor << endl;
     doHandshake(connectionSocketDescriptor);
-    thread threads[1];
     auto threadData = ThreadData(connectionSocketDescriptor);
-    int roomId = -1;
-    globalData.addClient(connectionSocketDescriptor, roomId);
-    threads[0] = thread(threadReadFromUserBehavior, threadData);
-    threads[0].join();
+    thread thread(threadReadFromUserBehavior, threadData);
+    thread.detach();
 }
 
 void doHandshake(int connectionSocketDescriptor) {
@@ -191,7 +194,6 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         handleConnection(connectionSocketDescriptor);
-        break;
     }
 
     close(serverSocketDescriptor);

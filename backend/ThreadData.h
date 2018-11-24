@@ -27,6 +27,11 @@ public:
 
 private:
     string threadMessage;
+    bool toClose;
+public:
+    bool isToClose() const;
+
+    void setToClose();
 
 };
 

@@ -25,3 +25,11 @@ const string &ThreadData::getThreadMessage() const {
 void ThreadData::setThreadMessage(const string &threadMessage) {
     ThreadData::threadMessage = threadMessage;
 }
+
+bool ThreadData::isToClose() const {
+    return toClose;
+}
+
+void ThreadData::setToClose() {
+    ThreadData::toClose = true;
+}

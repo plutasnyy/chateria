@@ -21,17 +21,17 @@ class SelectRoomView extends React.Component {
         this.getRooms = this.getRooms.bind(this);
 
         this.state = {
-            currentRoomID: undefined,
+            currentRoomName: undefined,
             newRoom: "",
         }
     }
 
     roomsDropdownOnChange(e) {
-        this.setState({currentRoomID: e.target.textContent})
+        this.setState({currentRoomName: e.target.textContent})
 
         options.forEach(option => {
             if (option.text === e.target.textContent) {
-                this.setState({currentRoomID: option.value})
+                this.setState({currentRoomName: option.value})
             }
         })
     }
@@ -41,13 +41,18 @@ class SelectRoomView extends React.Component {
     }
 
     handleSubmit(event) {
-        if (this.state.currentRoomID === undefined && this.state.newRoom === "") {
+        if (this.state.currentRoomName === undefined && this.state.newRoom === "") {
             alert("Please provide every neccesary data")
         } else {
+            this.sendMessage(JSON.stringify({
+                'action': 'CLOSE'
+            }));
             if (this.state.currentRoom) {
-                this.props.history.push('/rooms/' + this.state.currentRoomID);
+                this.props.history.push('/rooms/' + this.state.currentRoomName);
             } else {
-                this.props.history.push('/rooms/' + this.state.newRoom);
+                let roomName = this.state.newRoom.split(' ').join('_');
+                roomName = roomName.split('/').join('_');
+                this.props.history.push('/rooms/' + roomName);
             }
         }
     }
@@ -57,11 +62,12 @@ class SelectRoomView extends React.Component {
         console.log(data);
     }
 
-    getRooms(){
+    getRooms() {
         let getRoomsMessage = JSON.stringify({
-            'action':'GET_ROOMS'
+            'action': 'GET_ROOMS'
         })
         this.sendMessage(getRoomsMessage);
+        return false;
     }
 
 
@@ -78,22 +84,18 @@ class SelectRoomView extends React.Component {
         this.setState({value: event.target.value});
     }
 
-    handleSubmit(event) {
-        event.preventDefault();
-        this.sendMessage(this.state.value);
-    }
-
     sendMessage(message) {
-        message+= String.fromCharCode(1);
-        console.log("SEND: "+message);
+        message += String.fromCharCode(1);
+        console.log("SEND: " + message);
         this.refWebsocket.sendMessage(message);
     }
-    
+
 
     render() {
         let websocketUrl = 'ws://localhost:8000'; // localStorage.getItem("ip");
         return (
             <div className={'BackgroundImg'}>
+                <Button onClick={this.getRooms}>Get Rooms</Button>
                 <Form className={'NickNameFormContainer'} onSubmit={this.handleSubmit}>
                     <Header as='h1' textAlign={'center'}>Hi!</Header>
                     <div className={'NickNameForm'}>
@@ -108,7 +110,6 @@ class SelectRoomView extends React.Component {
                         <Button type='submit'>Next</Button>
                     </div>
                 </Form>
-                <Button onClick={this.getRooms}>Get Rooms</Button>
                 <Websocket url={websocketUrl} onMessage={this.handleData} onOpen={this.onOpen} onClose={this.onClose}
                            ref={Websocket => {
                                this.refWebsocket = Websocket;
