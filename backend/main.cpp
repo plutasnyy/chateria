@@ -42,6 +42,8 @@ string getMessageFromEncodedBuffer(char *buffer);
 
 void processThreadMessage(string basic_string, ThreadData data);
 
+unsigned char *encodeString(const string &stringToEncode, int i);
+
 void sendMessageForRoom(string msg, int roomId) {
     printf("New thread to send message for %d\n", roomId);
     const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomId);
@@ -51,17 +53,25 @@ void sendMessageForRoom(string msg, int roomId) {
     globalData.endSendingMessage();
 }
 
-void sendMessageForUser(string msg, int connectionSocketDescriptor){
+void sendMessageForUser(string msg, int connectionSocketDescriptor) {
+    int frameSize = 0;
+    unsigned char *buffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
+    frameSize = websocketSetContent(msg.c_str(), static_cast<int>(msg.size()), buffer, BUF_SIZE);
     globalData.startSendingMessage();
-    write(connectionSocketDescriptor, msg.c_str(), msg.size());
+    cout << "SIZE: " << frameSize << "BUFFER: " << buffer << endl;
+    write(connectionSocketDescriptor, buffer, frameSize);
     globalData.endSendingMessage();
+    cout << "Message was sent" << endl;
 }
 
 void processMessage(char *readMessageBuffer, ThreadData threadData) {
+    cout << "Processing message" << endl;
     string message = getMessageFromEncodedBuffer(readMessageBuffer);
+    cout << "Decoded message: " << message << endl;
     string fullMessage = threadData.getThreadMessage();
-    for(char& c : message) {
-        if(1 == c) {
+    for (char &c : message) {
+        if (1 == c) {
+            cout << "Start processing thread message" << endl;
             processThreadMessage(fullMessage, threadData);
             threadData.setThreadMessage("");
             return;
@@ -69,16 +79,18 @@ void processMessage(char *readMessageBuffer, ThreadData threadData) {
         fullMessage += c;
     }
     threadData.setThreadMessage(fullMessage);
+    cout << "Message was processed" << endl;
 }
 
 void processThreadMessage(string threadMessage, ThreadData threadData) {
     json receivedJson = json::parse(threadMessage);
     string action = receivedJson.at("action");
-    if(action == "GET_ROOMS"){
+    if (action == "GET_ROOMS") {
         json msg, rooms(globalData.getActivesRoomsNames());
-        msg["action"]= "ROOM_LIST";
+        msg["action"] = "ROOM_LIST";
         msg["roomList"] = rooms;
-        sendMessageForUser(msg.dump(),threadData.getConnectionSocketDescriptor());
+        thread thread(sendMessageForUser,msg.dump(), threadData.getConnectionSocketDescriptor());
+        thread.detach();
     }
 }
 
@@ -88,21 +100,25 @@ string getMessageFromEncodedBuffer(char *readMessageBuffer) {
     websocketGetContent(readMessageBuffer, BUF_SIZE, encryptedIncommingMessageBuffer, BUF_SIZE);
     string decodedMessage(reinterpret_cast<char *>(encryptedIncommingMessageBuffer));
     int size = 0;
-    for(char& c : decodedMessage) {
+    for (char &c : decodedMessage) {
         size++;
-        if(1 == c) break;
+        if (1 == c) break;
     }
-    return decodedMessage.substr(0,size);
+    return decodedMessage.substr(0, size);
 }
 
 void threadReadFromUserBehavior(ThreadData threadData) {
     cout << "Started reading thread\n";
     int desc = threadData.getConnectionSocketDescriptor();
     char *readMessageBuffer = new char[BUF_SIZE];
+    int i = 0;
     while (1) {
         read(desc, readMessageBuffer, BUF_SIZE);
-        printf("Received: \n*************START****************\n%s\n*************END****************\n", readMessageBuffer);
+        printf("Received: \n*************START****************\n%s\n*************END****************\n",
+               readMessageBuffer);
         processMessage(readMessageBuffer, threadData);
+        i++;
+        if (i > 4)break;
     }
 }
 
@@ -175,6 +191,7 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         handleConnection(connectionSocketDescriptor);
+        break;
     }
 
     close(serverSocketDescriptor);

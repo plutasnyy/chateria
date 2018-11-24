@@ -18,6 +18,7 @@ class SelectRoomView extends React.Component {
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.sendMessage = this.sendMessage.bind(this);
+        this.getRooms = this.getRooms.bind(this);
 
         this.state = {
             currentRoomID: undefined,
@@ -56,8 +57,17 @@ class SelectRoomView extends React.Component {
         console.log(data);
     }
 
+    getRooms(){
+        let getRoomsMessage = JSON.stringify({
+            'action':'GET_ROOMS'
+        })
+        this.sendMessage(getRoomsMessage);
+    }
+
+
     onOpen() {
         console.log("Open ws");
+
     }
 
     onClose() {
@@ -74,12 +84,9 @@ class SelectRoomView extends React.Component {
     }
 
     sendMessage(message) {
-        let x = JSON.stringify({
-            'action':'GET_ROOMS'
-        })
-        x+= String.fromCharCode(1);
-        console.log("wysylam"+x);
-        this.refWebsocket.sendMessage(x);
+        message+= String.fromCharCode(1);
+        console.log("SEND: "+message);
+        this.refWebsocket.sendMessage(message);
     }
     
 
@@ -101,6 +108,7 @@ class SelectRoomView extends React.Component {
                         <Button type='submit'>Next</Button>
                     </div>
                 </Form>
+                <Button onClick={this.getRooms}>Get Rooms</Button>
                 <Websocket url={websocketUrl} onMessage={this.handleData} onOpen={this.onOpen} onClose={this.onClose}
                            ref={Websocket => {
                                this.refWebsocket = Websocket;
