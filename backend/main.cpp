@@ -44,11 +44,15 @@ void processThreadMessage(string basic_string, ThreadData data);
 
 unsigned char *encodeString(const string &stringToEncode, int i);
 
-void sendMessageForRoom(string msg, int roomId) {
-    printf("New thread to send message for %d\n", roomId);
-    const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomId);
+void sendMessageForRoom(string msg, string roomName) {
+    cout << "New thread to send message for " << roomName << endl;
+    int frameSize = 0;
+    unsigned char *buffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
+    frameSize = websocketSetContent(msg.c_str(), static_cast<int>(msg.size()), buffer, BUF_SIZE);
+    cout << "SIZE: " << frameSize << "BUFFER: " << buffer << endl;
+    const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomName);
     for (int clientDescriptor : clientDescriptorsList) {
-        write(clientDescriptor, "NEW", 7);
+        write(clientDescriptor, buffer, frameSize);
     }
     globalData.endSendingMessage();
 }
@@ -73,13 +77,25 @@ void processMessage(char *readMessageBuffer, ThreadData threadData) {
         if (1 == c) {
             cout << "Start processing thread message" << endl;
             processThreadMessage(fullMessage, threadData);
+            cout << "Message was procesed" << endl;
             threadData.setThreadMessage("");
+            cout << "Message was cleared" << endl;
             return;
         }
         fullMessage += c;
     }
     threadData.setThreadMessage(fullMessage);
     cout << "Message was processed" << endl;
+}
+
+void addUserToRoom(string roomName, int connectionSocketDescriptor) {
+    globalData.addClient(connectionSocketDescriptor, roomName);
+    cout << "Thread add user added" << endl;
+}
+
+void removeUserFromRoom(string roomName, int connectionSocketDescriptor) {
+    globalData.removeClient(connectionSocketDescriptor, roomName);
+    cout << "User removed" << endl;
 }
 
 void processThreadMessage(string threadMessage, ThreadData threadData) {
@@ -89,13 +105,21 @@ void processThreadMessage(string threadMessage, ThreadData threadData) {
         json msg, rooms(globalData.getActivesRoomsNames());
         msg["action"] = "ROOM_LIST";
         msg["roomList"] = rooms;
-        thread thread(sendMessageForUser,msg.dump(), threadData.getConnectionSocketDescriptor());
+        thread thread(sendMessageForUser, msg.dump(), threadData.getConnectionSocketDescriptor());
         thread.detach();
+    } else if (action == "ADD_TO_ROOM") {
+        string roomName = receivedJson.at("room");
+        thread thread(addUserToRoom, roomName, threadData.getConnectionSocketDescriptor());
+        thread.detach();
+        cout << "Go out from function" << endl;
     } else if (action == "CLOSE") {
         threadData.setToClose();
-    }else if (action == "EXIT_ROOM") {
+    } else if (action == "EXIT_ROOM") {
         threadData.setToClose();
-    }else if (action == "MESSAGE") {
+    } else if (action == "MESSAGE") {
+        string roomName = receivedJson.at("room");
+        thread thread(sendMessageForRoom, receivedJson.dump(), roomName);
+        thread.detach();
     }
 }
 
@@ -118,13 +142,21 @@ void threadReadFromUserBehavior(ThreadData threadData) {
     char *readMessageBuffer = new char[BUF_SIZE];
     int i = 0;
     while (1) {
+        cout << "Czekam na wiadomosc" << endl;
         read(desc, readMessageBuffer, BUF_SIZE);
         printf("Received: \n*************START****************\n%s\n*************END****************\n",
                readMessageBuffer);
         processMessage(readMessageBuffer, threadData);
-        if(threadData.isToClose()) break;
+        cout << "Message processed" << endl;
+        if (threadData.isToClose()) {
+            cout << "Thread to close" << endl;
+            break;
+        }
         i++;
-        if (i > 4)break;
+        if (i > 4) {
+            cout << "Too much iterations" << endl;
+            break;
+        }
     }
 }
 

@@ -11,7 +11,7 @@ export default class App extends Component {
                 <div className="container">
                     <Route exact path="/" component={HomePage}/>
                     <Route exact path="/select" component={SelectRoomView}/>
-                    <Route exact path="/rooms/:roomID" component={Room}/>
+                    <Route exact path="/rooms/:roomID/:userName" component={Room}/>
                 </div>
             </Router>
         );

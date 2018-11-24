@@ -10,12 +10,20 @@ using namespace std;
 
 class GlobalData {
 
+private:
+    bool isExistingRoom(string roomName);
+
+    mutex processingGlobalData, sendingMessage;
+    map<string, list < int>> roomNameToConnectionDescriptorsMap;
+    map<string, int> roomNameToIdMap;
+    map<int, string> roomIdToNameMap;
 public:
+
     const map<int, string> &getRoomIdToNameMap() const;
 
-    void addClient(int clientConnectionDescriptor, int roomId);
+    void addClient(int clientConnectionDescriptor, string roomName);
 
-    list<int> getConnectionSocketDescriptors(int roomId);
+    list<int> getConnectionSocketDescriptors(string roomName);
 
     void endSendingMessage();
 
@@ -29,13 +37,7 @@ public:
 
     void startSendingMessage();
 
-private:
-    bool isExistingRoom(const int &id);
-
-    mutex processingGlobalData, sendingMessage;
-    map<int, list < int>> roomIdToConnectionDescriptorsMap;
-    map<string, int> roomNameToIdMap;
-    map<int, string> roomIdToNameMap;
+    void removeClient(int i, string basic_string);
 };
 
 

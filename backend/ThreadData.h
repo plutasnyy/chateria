@@ -27,7 +27,7 @@ public:
 
 private:
     string threadMessage;
-    bool toClose;
+    bool toClose = false;
 public:
     bool isToClose() const;
 

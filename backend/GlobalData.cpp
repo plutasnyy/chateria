@@ -1,30 +1,44 @@
 #include <algorithm>
+#include <iostream>
 #include "GlobalData.h"
 
-bool GlobalData::isExistingRoom(const int &id) {
-    return roomIdToConnectionDescriptorsMap.find(id) != roomIdToConnectionDescriptorsMap.end();
+bool GlobalData::isExistingRoom(string roomName) {
+    return roomNameToConnectionDescriptorsMap.find(roomName) != roomNameToConnectionDescriptorsMap.end();
 }
 
-void GlobalData::addClient(int clientConnectionDescriptor, int roomId) {
+void GlobalData::addClient(int clientConnectionDescriptor, string roomName) {
     printf("Add client\n");
     processingGlobalData.lock();
     sendingMessage.lock();
-    if (isExistingRoom(roomId)) {
-        roomIdToConnectionDescriptorsMap[roomId].push_back(clientConnectionDescriptor);
+    if (isExistingRoom(roomName)) {
+        roomNameToConnectionDescriptorsMap[roomName].push_back(clientConnectionDescriptor);
     } else {
         list<int> newList;
         newList.push_back(clientConnectionDescriptor);
-        roomIdToConnectionDescriptorsMap[roomId] = list<int>(newList);
+        roomNameToConnectionDescriptorsMap[roomName] = list<int>(newList);
     }
     sendingMessage.unlock();
     processingGlobalData.unlock();
     printf("Client was added\n");
 }
 
-list<int> GlobalData::getConnectionSocketDescriptors(int roomId) {
+
+void GlobalData::removeClient(int clientConnectionDescriptor, string roomName) {
+    cout<<"Remove client"<<endl;
+    processingGlobalData.lock();
+    sendingMessage.lock();
+    if (isExistingRoom(roomName)) {
+        roomNameToConnectionDescriptorsMap[roomName].remove(clientConnectionDescriptor);
+    }
+    sendingMessage.unlock();
+    processingGlobalData.unlock();
+    cout<<"Client removed"<<endl;
+}
+
+list<int> GlobalData::getConnectionSocketDescriptors(string roomName) {
     list<int> tempList;
     processingGlobalData.lock();
-    tempList = roomIdToConnectionDescriptorsMap[roomId];
+    tempList = roomNameToConnectionDescriptorsMap[roomName];
     processingGlobalData.unlock();
     printf("Returned %d descriptors\n", static_cast<int>(tempList.size()));
     return tempList;
@@ -63,10 +77,11 @@ void GlobalData::setRoomIdToNameMap(const map<int, string> &roomIdToNameMap) {
 
 list<string> GlobalData::getActivesRoomsNames() {
     list<string> result;
-    for(const auto& kv:this->roomIdToConnectionDescriptorsMap){
+    for(const auto& kv:this->roomNameToConnectionDescriptorsMap){
         if(!kv.second.empty()){
-            result.push_back(this->roomIdToNameMap[kv.first]);
+            result.push_back(kv.first);
         }
     }
     return result;
 }
+

@@ -25,6 +25,11 @@ class Room extends React.Component {
 
     handleData(data) {
         console.log(data);
+        let item = JSON.parse(data);
+        item.key = item.id;
+        console.log(item)
+        this.setState({mes: [...this.state.mes, item]})
+        console.log(this.state)
     }
 
     onOpen() {
@@ -32,7 +37,7 @@ class Room extends React.Component {
         let addToRoomMessage = JSON.stringify({
             'action': 'ADD_TO_ROOM',
             'room': this.props.match.params.roomID,
-            'nick': localStorage.getItem('nick'),
+            'nick': this.props.match.params.userName,
         });
         this.sendMessage(addToRoomMessage);
 
@@ -50,7 +55,7 @@ class Room extends React.Component {
         event.preventDefault();
         let sendMessage = JSON.stringify({
             'action':'MESSAGE',
-            'nick': localStorage.getItem('nick'),
+            'nick': this.props.match.params.userName,
             'room': this.props.match.params.roomID,
             'message':this.state.value,
         });
@@ -60,7 +65,7 @@ class Room extends React.Component {
     goHome() {
         this.sendMessage(JSON.stringify({
             'action': 'EXIT_ROOM',
-            'nick': localStorage.getItem('nick'),
+            'nick': this.props.match.params.userName,
             'room': this.props.match.params.roomID,
         }));
         this.props.history.push('/');
@@ -77,11 +82,11 @@ class Room extends React.Component {
         return (
             <div className={'BackgroundImg'}>
                 <div className={'RoomContainer'}>
-                    <h3> Hello {localStorage.getItem('nick')} in <span id='roomHeader'>{this.props.match.params.roomID}</span></h3>
+                    <h3> Hello {this.props.match.params.userName} in <span id='roomHeader'>{this.props.match.params.roomID}</span></h3>
 
                     <div id="chat-log" style={{'overflow': 'auto'}}>
                         {this.state.mes.map(function (item, i) {
-                            return <div><strong>item author</strong>: item content </div>
+                            return <div> <strong>{item.nick}</strong>: {item.message} </div>
                         })}
                     </div>
 

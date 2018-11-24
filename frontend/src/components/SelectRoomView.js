@@ -44,15 +44,12 @@ class SelectRoomView extends React.Component {
         if (this.state.currentRoomName === undefined && this.state.newRoom === "") {
             alert("Please provide every neccesary data")
         } else {
-            this.sendMessage(JSON.stringify({
-                'action': 'CLOSE'
-            }));
             if (this.state.currentRoom) {
-                this.props.history.push('/rooms/' + this.state.currentRoomName);
+                this.props.history.push('/rooms/' + this.state.currentRoomName + '/' + localStorage.getItem('nick'));
             } else {
                 let roomName = this.state.newRoom.split(' ').join('_');
                 roomName = roomName.split('/').join('_');
-                this.props.history.push('/rooms/' + roomName);
+                this.props.history.push('/rooms/' + roomName + '/' + localStorage.getItem('nick'));
             }
         }
     }
@@ -73,7 +70,6 @@ class SelectRoomView extends React.Component {
 
     onOpen() {
         console.log("Open ws");
-
     }
 
     onClose() {
