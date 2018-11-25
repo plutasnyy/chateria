@@ -155,7 +155,6 @@ void threadReadFromUserBehavior(ThreadData threadData) {
         i++;
         if (i > 4) {
             cout << "Too much iterations" << endl;
-            break;
         }
     }
 }
