@@ -8,7 +8,7 @@ bool GlobalData::isExistingRoom(string roomName) {
 
 void GlobalData::addClient(int clientConnectionDescriptor, string roomName) {
     printf("Add client\n");
-    cout << "Try to lock SENDING MESSAGE for add client" << endl;
+    cout << "Try to lock SENDING MESSAGE for added client" << endl;
     sendingMessage.lock();
     cout << "SENDING LOCK" << endl;
     if (isExistingRoom(roomName)) {
@@ -26,7 +26,7 @@ void GlobalData::addClient(int clientConnectionDescriptor, string roomName) {
 
 void GlobalData::removeClient(int clientConnectionDescriptor, string roomName) {
     cout << "Remove client" << endl;
-    cout << "Try to lock SENDING MESSAGE for remove" << endl;
+    cout << "Try to lock SENDING MESSAGE for removed client" << endl;
     sendingMessage.lock();
     cout << "SENDING LOCK" << endl;
     if (isExistingRoom(roomName)) {
@@ -38,7 +38,7 @@ void GlobalData::removeClient(int clientConnectionDescriptor, string roomName) {
 }
 
 list<int> GlobalData::getConnectionSocketDescriptors(string roomName) {
-    cout << "Try to lock SENDING MESSAGE for get connection socket" << endl;
+    cout << "Try to lock SENDING MESSAGE for getting connection socket" << endl;
     sendingMessage.lock();
     printf("SENDING MESSAGE LOCK \n");
     list<int> tempList;
@@ -56,7 +56,7 @@ void GlobalData::endSendingMessage() {
 }
 
 void GlobalData::startSendingMessage() {
-    cout << "Try lock SENDING" << endl;
+    cout << "Try lock SENDING message" << endl;
     sendingMessage.lock();
     printf("SENDING MESSAGE LOCK \n");
 }
