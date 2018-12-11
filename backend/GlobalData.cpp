@@ -8,8 +8,9 @@ bool GlobalData::isExistingRoom(string roomName) {
 
 void GlobalData::addClient(int clientConnectionDescriptor, string roomName) {
     printf("Add client\n");
-    processingGlobalData.lock();
+    cout << "Try to lock SENDING MESSAGE for add client" << endl;
     sendingMessage.lock();
+    cout << "SENDING LOCK" << endl;
     if (isExistingRoom(roomName)) {
         roomNameToConnectionDescriptorsMap[roomName].push_back(clientConnectionDescriptor);
     } else {
@@ -18,67 +19,52 @@ void GlobalData::addClient(int clientConnectionDescriptor, string roomName) {
         roomNameToConnectionDescriptorsMap[roomName] = list<int>(newList);
     }
     sendingMessage.unlock();
-    processingGlobalData.unlock();
+    printf("SENDING MESSAGE UNLOCK \n");
     printf("Client was added\n");
 }
 
 
 void GlobalData::removeClient(int clientConnectionDescriptor, string roomName) {
-    cout<<"Remove client"<<endl;
-    processingGlobalData.lock();
+    cout << "Remove client" << endl;
+    cout << "Try to lock SENDING MESSAGE for remove" << endl;
     sendingMessage.lock();
+    cout << "SENDING LOCK" << endl;
     if (isExistingRoom(roomName)) {
         roomNameToConnectionDescriptorsMap[roomName].remove(clientConnectionDescriptor);
     }
     sendingMessage.unlock();
-    processingGlobalData.unlock();
-    cout<<"Client removed"<<endl;
+    printf("SENDING MESSAGE UNLOCK \n");
+    cout << "Client was removed" << endl;
 }
 
 list<int> GlobalData::getConnectionSocketDescriptors(string roomName) {
+    cout << "Try to lock SENDING MESSAGE for get connection socket" << endl;
+    sendingMessage.lock();
+    printf("SENDING MESSAGE LOCK \n");
     list<int> tempList;
-    processingGlobalData.lock();
     tempList = roomNameToConnectionDescriptorsMap[roomName];
-    processingGlobalData.unlock();
     printf("Returned %d descriptors\n", static_cast<int>(tempList.size()));
+    sendingMessage.unlock();
+    printf("SENDING MESSAGE UNLOCK \n");
     return tempList;
 }
 
 void GlobalData::endSendingMessage() {
-    processingGlobalData.lock();
     sendingMessage.unlock();
     printf("SENDING MESSAGE UNLOCK \n");
-    processingGlobalData.unlock();
-    printf("Message sended\n");
+    printf("Message was sent\n");
 }
 
 void GlobalData::startSendingMessage() {
-    processingGlobalData.lock();
+    cout << "Try lock SENDING" << endl;
     sendingMessage.lock();
     printf("SENDING MESSAGE LOCK \n");
-    processingGlobalData.unlock();
-}
-
-const map<string, int> &GlobalData::getRoomNameToIdMap() const {
-    return roomNameToIdMap;
-}
-
-void GlobalData::setRoomNameToIdMap(const map<string, int> &roomNameToIdMap) {
-    GlobalData::roomNameToIdMap = roomNameToIdMap;
-}
-
-const map<int, string> &GlobalData::getRoomIdToNameMap() const {
-    return roomIdToNameMap;
-}
-
-void GlobalData::setRoomIdToNameMap(const map<int, string> &roomIdToNameMap) {
-    GlobalData::roomIdToNameMap = roomIdToNameMap;
 }
 
 list<string> GlobalData::getActivesRoomsNames() {
     list<string> result;
-    for(const auto& kv:this->roomNameToConnectionDescriptorsMap){
-        if(!kv.second.empty()){
+    for (const auto &kv:this->roomNameToConnectionDescriptorsMap) {
+        if (!kv.second.empty()) {
             result.push_back(kv.first);
         }
     }

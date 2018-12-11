@@ -6,18 +6,6 @@ int ThreadData::getConnectionSocketDescriptor() const {
     return connectionSocketDescriptor;
 }
 
-void ThreadData::setConnectionSocketDescriptor(int connectionSocketDescriptor) {
-    ThreadData::connectionSocketDescriptor = connectionSocketDescriptor;
-}
-
-int ThreadData::getRoomId() const {
-    return roomId;
-}
-
-void ThreadData::setRoomId(int roomId) {
-    ThreadData::roomId = roomId;
-}
-
 const string &ThreadData::getThreadMessage() const {
     return threadMessage;
 }
