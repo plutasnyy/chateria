@@ -15,11 +15,7 @@ private:
 
     mutex processingGlobalData, sendingMessage;
     map<string, list < int>> roomNameToConnectionDescriptorsMap;
-    map<string, int> roomNameToIdMap;
-    map<int, string> roomIdToNameMap;
 public:
-
-    const map<int, string> &getRoomIdToNameMap() const;
 
     void addClient(int clientConnectionDescriptor, string roomName);
 
@@ -27,13 +23,7 @@ public:
 
     void endSendingMessage();
 
-    const map<string, int> &getRoomNameToIdMap() const;
-
-    void setRoomNameToIdMap(const map<string, int> &roomNameToIdMap);
-
     list <string> getActivesRoomsNames();
-
-    void setRoomIdToNameMap(const map<int, string> &roomIdToNameMap);
 
     void startSendingMessage();
 

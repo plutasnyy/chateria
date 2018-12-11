@@ -1,10 +1,9 @@
 import React from 'react'
 import {Button, Form, Header, Dropdown} from 'semantic-ui-react'
 import './../css/HomePage.css'
-import {create} from 'axios';
 import Websocket from "./Websocket";
 
-var options = []
+var options = [];
 
 class SelectRoomView extends React.Component {
 
@@ -19,6 +18,7 @@ class SelectRoomView extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.sendMessage = this.sendMessage.bind(this);
         this.getRooms = this.getRooms.bind(this);
+        this.goHome = this.goHome.bind(this);
 
         this.state = {
             currentRoomName: undefined,
@@ -28,12 +28,6 @@ class SelectRoomView extends React.Component {
 
     roomsDropdownOnChange(e) {
         this.setState({currentRoomName: e.target.textContent})
-
-        options.forEach(option => {
-            if (option.text === e.target.textContent) {
-                this.setState({currentRoomName: option.value})
-            }
-        })
     }
 
     newRoomLabelOnChange(e) {
@@ -44,19 +38,24 @@ class SelectRoomView extends React.Component {
         if (this.state.currentRoomName === undefined && this.state.newRoom === "") {
             alert("Please provide every neccesary data")
         } else {
-            if (this.state.currentRoom) {
-                this.props.history.push('/rooms/' + this.state.currentRoomName + '/' + localStorage.getItem('nick'));
-            } else {
+            if (this.state.newRoom !== "") {
                 let roomName = this.state.newRoom.split(' ').join('_');
                 roomName = roomName.split('/').join('_');
                 this.props.history.push('/rooms/' + roomName + '/' + localStorage.getItem('nick'));
+            } else {
+                this.props.history.push('/rooms/' + this.state.currentRoomName + '/' + localStorage.getItem('nick'));
             }
         }
     }
 
 
     handleData(data) {
-        console.log(data);
+        options = []
+        JSON.parse(data).roomList.forEach(roomName => {
+            options.push({text: roomName, key: roomName, value: roomName})
+        })
+        console.log(options)
+        this.forceUpdate()
     }
 
     getRooms() {
@@ -65,6 +64,13 @@ class SelectRoomView extends React.Component {
         })
         this.sendMessage(getRoomsMessage);
         return false;
+    }
+
+    goHome() {
+        this.sendMessage(JSON.stringify({
+            'action': 'CLOSE',
+        }));
+        this.props.history.push('/');
     }
 
 
@@ -92,12 +98,13 @@ class SelectRoomView extends React.Component {
         return (
             <div className={'BackgroundImg'}>
                 <Button onClick={this.getRooms}>Get Rooms</Button>
+                <Button onClick={this.goHome}>Go Home</Button>
                 <Form className={'NickNameFormContainer'} onSubmit={this.handleSubmit}>
                     <Header as='h1' textAlign={'center'}>Hi!</Header>
                     <div className={'NickNameForm'}>
                         <span>
-                            <strong>Select a room to go in:{' '} </strong>
-                            <Dropdown inline options={options} onChange={this.roomsDropdownOnChange}/>
+                            <strong>Select a room to go in: </strong>
+                            <Dropdown fluid selection options={options} onChange={this.roomsDropdownOnChange}/>
                         </span>
                         <Form.Field style={{'marginTop': '16px'}}>
                             <label> Or create new </label>

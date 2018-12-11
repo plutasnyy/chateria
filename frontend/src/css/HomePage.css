@@ -1,10 +1,10 @@
-.BackgroundImg{
+.BackgroundImg {
     background-image: url("https://bmisw.com/wp-content/uploads/2011/01/6894141-blurred.jpg");
     background-size: 100% 100%;
     height: 100vh;
 }
 
-.NickNameFormContainer{
+.NickNameFormContainer {
     width: 512px;
     height: 512px;
     background: white;
@@ -22,11 +22,11 @@
     opacity: 0.85;
 }
 
-.NickNameFormContainer button{
-    float:right;
+.NickNameFormContainer button {
+    float: right;
 }
 
-.NickNameForm{
+.NickNameForm {
     width: 432px;
     margin-top: 60px;
     position: absolute;
