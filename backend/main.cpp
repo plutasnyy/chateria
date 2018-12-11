@@ -51,7 +51,6 @@ void sendMessageForRoom(string msg, string roomName) {
     frameSize = websocketSetContent(msg.c_str(), static_cast<int>(msg.size()), buffer, BUF_SIZE);
     cout << "SIZE: " << frameSize << "BUFFER: " << buffer << endl;
     const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomName);
-    globalData.startSendingMessage();
     for (int clientDescriptor : clientDescriptorsList) {
         write(clientDescriptor, buffer, frameSize);
     }
@@ -116,15 +115,10 @@ void processThreadMessage(string threadMessage, ThreadData threadData) {
     } else if (action == "CLOSE") {
         threadData.setToClose();
     } else if (action == "EXIT_ROOM") {
-        string roomName = receivedJson.at("room");
-        thread thread(removeUserFromRoom, roomName, threadData.getConnectionSocketDescriptor());
-        thread.detach();
+        threadData.setToClose();
     } else if (action == "MESSAGE") {
         string roomName = receivedJson.at("room");
         thread thread(sendMessageForRoom, receivedJson.dump(), roomName);
-        thread.detach();
-    } else if (action == "PING") {
-        thread thread(sendMessageForUser, receivedJson.dump(), threadData.getConnectionSocketDescriptor());
         thread.detach();
     }
 }
@@ -148,7 +142,7 @@ void threadReadFromUserBehavior(ThreadData threadData) {
     char *readMessageBuffer = new char[BUF_SIZE];
     int i = 0;
     while (1) {
-        cout << "Waiting for a message" << endl;
+        cout << "Czekam na wiadomosc" << endl;
         read(desc, readMessageBuffer, BUF_SIZE);
         printf("Received: \n*************START****************\n%s\n*************END****************\n",
                readMessageBuffer);
@@ -159,9 +153,10 @@ void threadReadFromUserBehavior(ThreadData threadData) {
             break;
         }
         i++;
-        if (i > 100)break;
+        if (i > 4) {
+            cout << "Too much iterations" << endl;
+        }
     }
-    cout << "End of reading" << endl;
 }
 
 void handleConnection(int connectionSocketDescriptor) {
@@ -205,28 +200,28 @@ int main(int argc, char *argv[]) {
 
     serverSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocketDescriptor < 0) {
-        fprintf(stderr, "%s: Error during creating websocket..\n", argv[0]);
+        fprintf(stderr, "%s: Błąd przy próbie utworzenia gniazda..\n", argv[0]);
         exit(1);
     }
     setsockopt(serverSocketDescriptor, SOL_SOCKET, SO_REUSEADDR, (char *) &reuseAddrVal, sizeof(reuseAddrVal));
 
     bindResult = bind(serverSocketDescriptor, (struct sockaddr *) &serverAddress, sizeof(struct sockaddr));
     if (bindResult < 0) {
-        fprintf(stderr, "%s: Error during creating ip connection.\n", argv[0]);
+        fprintf(stderr, "%s: Błąd przy próbie dowiązania adresu IP i numeru portu do gniazda.\n", argv[0]);
         exit(1);
     }
 
     listenResult = listen(serverSocketDescriptor, QUEUE_SIZE);
     if (listenResult < 0) {
-        fprintf(stderr, "%s:Error during setting size of queue.\n", argv[0]);
+        fprintf(stderr, "%s: Błąd przy próbie ustawienia wielkości kolejki.\n", argv[0]);
         exit(1);
     }
 
     while (1) {
-        cout << "Listening" << endl;
+        printf("Zaczynam nasluchiwanie:\n");
         connectionSocketDescriptor = accept(serverSocketDescriptor, NULL, NULL);
         if (connectionSocketDescriptor < 0) {
-            fprintf(stderr, "%s: Error during creating socket for connection.\n", argv[0]);
+            fprintf(stderr, "%s: Błąd przy próbie utworzenia gniazda dla połączenia.\n", argv[0]);
             exit(1);
         }
         handleConnection(connectionSocketDescriptor);

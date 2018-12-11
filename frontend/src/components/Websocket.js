@@ -17,8 +17,8 @@ class Websocket extends React.Component {
         }
     }
 
-    generateInterval(k) {
-        if (this.props.reconnectIntervalInMilliSeconds > 0) {
+    generateInterval (k) {
+        if(this.props.reconnectIntervalInMilliSeconds > 0) {
             return this.props.reconnectIntervalInMilliSeconds;
         }
         return Math.min(30, (Math.pow(2, k) - 1)) * 1000;
@@ -43,7 +43,7 @@ class Websocket extends React.Component {
             if (this.shouldReconnect) {
                 let time = this.generateInterval(this.state.attempts);
                 this.timeoutID = setTimeout(() => {
-                    this.setState({attempts: this.state.attempts + 1});
+                    this.setState({attempts: this.state.attempts+1});
                     this.setState({ws: new WebSocket(this.props.url, this.props.protocol)});
                     this.setupWebsocket();
                 }, time);
@@ -62,7 +62,7 @@ class Websocket extends React.Component {
         websocket.close();
     }
 
-    sendMessage(message) {
+    sendMessage(message){
         let websocket = this.state.ws;
         websocket.send(message);
     }
@@ -87,7 +87,7 @@ Websocket.propTypes = {
     debug: PropTypes.bool,
     reconnect: PropTypes.bool,
     protocol: PropTypes.string,
-    reconnectIntervalInMilliSeconds: PropTypes.number
+    reconnectIntervalInMilliSeconds : PropTypes.number
 };
 
 export default Websocket;

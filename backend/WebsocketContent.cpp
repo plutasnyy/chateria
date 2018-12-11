@@ -7,7 +7,6 @@
 
 using namespace std;
 
-//This library was created by Marcin Kelar ( marcin.kelar@gmail.com ) source code: https://github.com/OrionExplorer/c-websocket
 int websocketSetContent(const char *data, int dataLength, unsigned char *dst, const unsigned int dstLen) {
     unsigned char *message = (unsigned char *) malloc(65535 * sizeof(char));
     int i;

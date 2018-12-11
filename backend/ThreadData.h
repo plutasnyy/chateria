@@ -7,22 +7,31 @@ using namespace std;
 
 class ThreadData {
 public:
-    ThreadData(int connectionSocketDescriptor);
+    void setConnectionSocketDescriptor(int connectionSocketDescriptor);
+
+    int getRoomId() const;
+
+    void setRoomId(int roomId);
 
     int getConnectionSocketDescriptor() const;
 
+    ThreadData(int connectionSocketDescriptor);
+
+private:
+    int connectionSocketDescriptor;
+    int roomId;
+public:
     const string &getThreadMessage() const;
 
     void setThreadMessage(const string &threadMessage);
 
+private:
+    string threadMessage;
+    bool toClose = false;
+public:
     bool isToClose() const;
 
     void setToClose();
-
-private:
-    int connectionSocketDescriptor;
-    string threadMessage;
-    bool toClose = false;
 
 };
 
