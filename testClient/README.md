@@ -15,7 +15,7 @@ eg.
 ./main.out 127.0.0.1 8000
 ```
 
-It will connect you to 127.0.0.0.1:8000
+It will connect you to 127.0.0.1:8000
 
 #### Clion
 
