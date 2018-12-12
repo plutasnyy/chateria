@@ -27,7 +27,7 @@ class HomePage extends React.Component {
 
     handleSubmit(event) {
         if (this.state.nick === "" || this.state.ip === "") {
-            alert("Please provide every neccesary data")
+            alert("Please provide neccesary data")
         } else {
             localStorage.setItem("nick", this.state.nick);
             localStorage.setItem("ip", this.state.ip);
