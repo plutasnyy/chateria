@@ -36,7 +36,7 @@ class SelectRoomView extends React.Component {
 
     handleSubmit(event) {
         if (this.state.currentRoomName === undefined && this.state.newRoom === "") {
-            alert("Please provide every neccesary data")
+            alert("Please provide neccesary data")
         } else {
             if (this.state.newRoom !== "") {
                 let roomName = this.state.newRoom.split(' ').join('_');
@@ -108,7 +108,7 @@ class SelectRoomView extends React.Component {
                         </span>
                         <Form.Field style={{'marginTop': '16px'}}>
                             <label> Or create new </label>
-                            <input placeholder={'Please provide room name'} onChange={this.newRoomLabelOnChange}/>
+                            <input placeholder={'Please provide the room name'} onChange={this.newRoomLabelOnChange}/>
                         </Form.Field>
                         <Button type='submit'>Next</Button>
                     </div>
