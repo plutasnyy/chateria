@@ -45,7 +45,7 @@ void processThreadMessage(string basic_string, ThreadData data);
 unsigned char *encodeString(const string &stringToEncode, int i);
 
 void sendMessageForRoom(string msg, string roomName) {
-    cout << "New thread to send message for " << roomName << endl;
+    cout << "New thread to send message to " << roomName << endl;
     int frameSize = 0;
     unsigned char *buffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
     frameSize = websocketSetContent(msg.c_str(), static_cast<int>(msg.size()), buffer, BUF_SIZE);
@@ -66,7 +66,7 @@ void sendMessageForUser(string msg, int connectionSocketDescriptor) {
     cout << "SIZE: " << frameSize << "BUFFER: " << buffer << endl;
     write(connectionSocketDescriptor, buffer, frameSize);
     globalData.endSendingMessage();
-    cout << "Message was sent" << endl;
+    cout << "Message sent" << endl;
 }
 
 void processMessage(char *readMessageBuffer, ThreadData threadData) {
@@ -76,17 +76,17 @@ void processMessage(char *readMessageBuffer, ThreadData threadData) {
     string fullMessage = threadData.getThreadMessage();
     for (char &c : message) {
         if (1 == c) {
-            cout << "Start processing thread message" << endl;
+            cout << "Starting to process thread messages" << endl;
             processThreadMessage(fullMessage, threadData);
-            cout << "Message was procesed" << endl;
+            cout << "Message processed" << endl;
             threadData.setThreadMessage("");
-            cout << "Message was cleared" << endl;
+            cout << "Message cleared" << endl;
             return;
         }
         fullMessage += c;
     }
     threadData.setThreadMessage(fullMessage);
-    cout << "Message was processed" << endl;
+    cout << "Message processed" << endl;
 }
 
 void addUserToRoom(string roomName, int connectionSocketDescriptor) {
@@ -205,20 +205,20 @@ int main(int argc, char *argv[]) {
 
     serverSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocketDescriptor < 0) {
-        fprintf(stderr, "%s: Error during creating websocket..\n", argv[0]);
+        fprintf(stderr, "%s: Error while creating a websocket..\n", argv[0]);
         exit(1);
     }
     setsockopt(serverSocketDescriptor, SOL_SOCKET, SO_REUSEADDR, (char *) &reuseAddrVal, sizeof(reuseAddrVal));
 
     bindResult = bind(serverSocketDescriptor, (struct sockaddr *) &serverAddress, sizeof(struct sockaddr));
     if (bindResult < 0) {
-        fprintf(stderr, "%s: Error during creating ip connection.\n", argv[0]);
+        fprintf(stderr, "%s: Error while creating an ip connection.\n", argv[0]);
         exit(1);
     }
 
     listenResult = listen(serverSocketDescriptor, QUEUE_SIZE);
     if (listenResult < 0) {
-        fprintf(stderr, "%s:Error during setting size of queue.\n", argv[0]);
+        fprintf(stderr, "%s:Error while setting the size of a queue.\n", argv[0]);
         exit(1);
     }
 
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
         cout << "Listening" << endl;
         connectionSocketDescriptor = accept(serverSocketDescriptor, NULL, NULL);
         if (connectionSocketDescriptor < 0) {
-            fprintf(stderr, "%s: Error during creating socket for connection.\n", argv[0]);
+            fprintf(stderr, "%s: Error while creating a socket for the connection.\n", argv[0]);
             exit(1);
         }
         handleConnection(connectionSocketDescriptor);
