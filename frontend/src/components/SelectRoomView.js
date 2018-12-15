@@ -23,7 +23,7 @@ class SelectRoomView extends React.Component {
         this.state = {
             currentRoomName: undefined,
             newRoom: "",
-            interval:undefined,
+            interval: undefined,
         }
     }
 

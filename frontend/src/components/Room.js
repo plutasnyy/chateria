@@ -11,7 +11,7 @@ class Room extends React.Component {
         this.state = {
             value: "",
             mes: [],
-            interval:undefined
+            interval: undefined
         };
         this.onOpen = this.onOpen.bind(this);
         this.handleData = this.handleData.bind(this);
@@ -24,7 +24,7 @@ class Room extends React.Component {
     handleData(data) {
         console.log(data);
         let item = JSON.parse(data);
-        if(item.action !== "PING") {
+        if (item.action !== "PING") {
             item.key = item.id;
             this.setState({mes: [...this.state.mes, item]})
             console.log(this.state)
@@ -84,7 +84,7 @@ class Room extends React.Component {
             }));
             console.log("Ping")
         }, 1000 * 30);
-        this.setState({interval:interval});
+        this.setState({interval: interval});
     }
 
     componentWillUnmount() {

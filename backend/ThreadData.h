@@ -26,7 +26,7 @@ public:
 private:
     int connectionSocketDescriptor;
     string threadMessage;
-    string roomName="";
+    string roomName = "";
     bool toClose = false;
 
 };

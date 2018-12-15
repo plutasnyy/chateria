@@ -147,8 +147,8 @@ void threadReadFromUserBehavior(ThreadData threadData) {
                readMessageBuffer);
         if (size == 0) {
             if (threadData.getRoomName() != "") {
-                threadData.setRoomName("");
                 removeUserFromRoom(threadData.getRoomName(), threadData.getConnectionSocketDescriptor());
+                threadData.setRoomName("");
             }
             break;
         }
