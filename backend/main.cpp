@@ -19,12 +19,12 @@
 #include <iostream>
 #include <sha.h>
 #include <bits/stdc++.h>
+#include <stddef.h>
 #include "ThreadData.h"
 #include "GlobalData.h"
 #include "Base64.h"
 #include "WebsocketContent.h"
 #include "json.hpp"
-
 
 #define SERVER_PORT 8000
 #define QUEUE_SIZE 5
@@ -40,16 +40,14 @@ void doHandshake(int descriptor);
 
 string getMessageFromEncodedBuffer(char *buffer);
 
-void processThreadMessage(string basic_string, ThreadData data);
-
-unsigned char *encodeString(const string &stringToEncode, int i);
+void processThreadMessage(string basic_string, ThreadData &data);
 
 void sendMessageForRoom(string msg, string roomName) {
     cout << "New thread to send message to " << roomName << endl;
     int frameSize = 0;
     unsigned char *buffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
     frameSize = websocketSetContent(msg.c_str(), static_cast<int>(msg.size()), buffer, BUF_SIZE);
-    cout << "SIZE: " << frameSize << "BUFFER: " << buffer << endl;
+    cout << "Size: " << frameSize << endl;
     const list<int> &clientDescriptorsList = globalData.getConnectionSocketDescriptors(roomName);
     globalData.startSendingMessage();
     for (int clientDescriptor : clientDescriptorsList) {
@@ -69,7 +67,7 @@ void sendMessageForUser(string msg, int connectionSocketDescriptor) {
     cout << "Message sent" << endl;
 }
 
-void processMessage(char *readMessageBuffer, ThreadData threadData) {
+void processMessage(char *readMessageBuffer, ThreadData &threadData) {
     cout << "Processing message" << endl;
     string message = getMessageFromEncodedBuffer(readMessageBuffer);
     cout << "Decoded message: " << message << endl;
@@ -99,33 +97,29 @@ void removeUserFromRoom(string roomName, int connectionSocketDescriptor) {
     cout << "User removed" << endl;
 }
 
-void processThreadMessage(string threadMessage, ThreadData threadData) {
+void processThreadMessage(string threadMessage, ThreadData &threadData) {
     json receivedJson = json::parse(threadMessage);
     string action = receivedJson.at("action");
     if (action == "GET_ROOMS") {
         json msg, rooms(globalData.getActivesRoomsNames());
         msg["action"] = "ROOM_LIST";
         msg["roomList"] = rooms;
-        thread thread(sendMessageForUser, msg.dump(), threadData.getConnectionSocketDescriptor());
-        thread.detach();
+        sendMessageForUser(msg.dump(), threadData.getConnectionSocketDescriptor());
     } else if (action == "ADD_TO_ROOM") {
         string roomName = receivedJson.at("room");
-        thread thread(addUserToRoom, roomName, threadData.getConnectionSocketDescriptor());
-        thread.detach();
-        cout << "Go out from function" << endl;
+        addUserToRoom(roomName, threadData.getConnectionSocketDescriptor());
+        threadData.setRoomName(roomName);
     } else if (action == "CLOSE") {
         threadData.setToClose();
     } else if (action == "EXIT_ROOM") {
         string roomName = receivedJson.at("room");
-        thread thread(removeUserFromRoom, roomName, threadData.getConnectionSocketDescriptor());
-        thread.detach();
+        removeUserFromRoom(roomName, threadData.getConnectionSocketDescriptor());
+        threadData.setRoomName("");
     } else if (action == "MESSAGE") {
         string roomName = receivedJson.at("room");
-        thread thread(sendMessageForRoom, receivedJson.dump(), roomName);
-        thread.detach();
+        sendMessageForRoom(receivedJson.dump(), roomName);
     } else if (action == "PING") {
-        thread thread(sendMessageForUser, receivedJson.dump(), threadData.getConnectionSocketDescriptor());
-        thread.detach();
+        sendMessageForUser(receivedJson.dump(), threadData.getConnectionSocketDescriptor());
     }
 }
 
@@ -144,22 +138,28 @@ string getMessageFromEncodedBuffer(char *readMessageBuffer) {
 
 void threadReadFromUserBehavior(ThreadData threadData) {
     cout << "Started reading thread\n";
-    int desc = threadData.getConnectionSocketDescriptor();
+    int desc = threadData.getConnectionSocketDescriptor(), size = 0;
     char *readMessageBuffer = new char[BUF_SIZE];
-    int i = 0;
     while (1) {
         cout << "Waiting for a message" << endl;
-        read(desc, readMessageBuffer, BUF_SIZE);
+        size = read(desc, readMessageBuffer, BUF_SIZE);
         printf("Received: \n*************START****************\n%s\n*************END****************\n",
                readMessageBuffer);
+        if (size == 0) {
+            if (threadData.getRoomName() != "") {
+                threadData.setRoomName("");
+                removeUserFromRoom(threadData.getRoomName(), threadData.getConnectionSocketDescriptor());
+            }
+            break;
+        }
+
         processMessage(readMessageBuffer, threadData);
+
         cout << "Message processed" << endl;
         if (threadData.isToClose()) {
             cout << "Thread to close" << endl;
             break;
         }
-        i++;
-        if (i > 100)break;
     }
     cout << "End of reading" << endl;
 }
@@ -168,14 +168,17 @@ void handleConnection(int connectionSocketDescriptor) {
     cout << "Handle connection for: " << connectionSocketDescriptor << endl;
     doHandshake(connectionSocketDescriptor);
     auto threadData = ThreadData(connectionSocketDescriptor);
+    cout << "Do proccess for: " << connectionSocketDescriptor << endl;
     thread thread(threadReadFromUserBehavior, threadData);
     thread.detach();
 }
 
 void doHandshake(int connectionSocketDescriptor) {
     char *buffer = new char[BUF_SIZE];
-    read(connectionSocketDescriptor, buffer, BUF_SIZE);
-    printf("Received: %s\n*************END****************\n", buffer);
+    int size = 0;
+    size = read(connectionSocketDescriptor, buffer, BUF_SIZE);
+    printf("Received: %d bits\n*************END****************\n", size);
+//    printf("Received: %s\n*************END****************\n", buffer);
     string handshakeMessage = buffer;
     string findString = "Sec-WebSocket-Key: ";
     unsigned long secInd = handshakeMessage.find("Sec-WebSocket-Key: ") + findString.size();
@@ -185,7 +188,8 @@ void doHandshake(int connectionSocketDescriptor) {
                            "Upgrade: websocket\r\n"
                            "Connection: Upgrade\r\n"
                            "Sec-WebSocket-Accept: " + encodeAcceptKey(key) + "\r\n\r\n";
-    cout << "Send: " << returnMessage << endl;
+//    cout << "Send: " << returnMessage << endl;
+    cout << "Key sent" << endl;
     write(connectionSocketDescriptor, returnMessage.c_str(), returnMessage.size());
 }
 

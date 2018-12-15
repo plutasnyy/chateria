@@ -21,3 +21,11 @@ bool ThreadData::isToClose() const {
 void ThreadData::setToClose() {
     ThreadData::toClose = true;
 }
+
+const string &ThreadData::getRoomName() const {
+    return roomName;
+}
+
+void ThreadData::setRoomName(const string &roomName) {
+    ThreadData::roomName = roomName;
+}

@@ -13,8 +13,9 @@ class GlobalData {
 private:
     bool isExistingRoom(string roomName);
 
-    mutex processingGlobalData, sendingMessage;
+    mutex sendingMessage;
     map<string, list < int>> roomNameToConnectionDescriptorsMap;
+
 public:
 
     void addClient(int clientConnectionDescriptor, string roomName);

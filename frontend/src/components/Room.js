@@ -88,7 +88,6 @@ class Room extends React.Component {
     }
 
     componentWillUnmount() {
-        console.log("unmoint");
         clearInterval(this.state.interval);
     }
 

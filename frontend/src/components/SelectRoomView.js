@@ -23,7 +23,19 @@ class SelectRoomView extends React.Component {
         this.state = {
             currentRoomName: undefined,
             newRoom: "",
+            interval:undefined,
         }
+    }
+
+    componentDidMount() {
+        //keep alive
+        let interval = setInterval(() => {
+            this.sendMessage(JSON.stringify({
+                'action': 'PING',
+            }));
+            console.log("Ping")
+        }, 1000 * 30);
+        this.setState({interval: interval});
     }
 
     roomsDropdownOnChange(e) {
@@ -38,6 +50,9 @@ class SelectRoomView extends React.Component {
         if (this.state.currentRoomName === undefined && this.state.newRoom === "") {
             alert("Please provide neccesary data")
         } else {
+            this.sendMessage(JSON.stringify({
+                'action': 'CLOSE',
+            }));
             if (this.state.newRoom !== "") {
                 let roomName = this.state.newRoom.split(' ').join('_');
                 roomName = roomName.split('/').join('_');
@@ -76,6 +91,7 @@ class SelectRoomView extends React.Component {
 
     onOpen() {
         console.log("Open ws");
+        localStorage.setItem("WebSocket", this.refWebsocket);
     }
 
     onClose() {
@@ -92,6 +108,9 @@ class SelectRoomView extends React.Component {
         this.refWebsocket.sendMessage(message);
     }
 
+    componentWillUnmount() {
+        clearInterval(this.state.interval);
+    }
 
     render() {
         let websocketUrl = 'ws://localhost:8000'; // localStorage.getItem("ip");

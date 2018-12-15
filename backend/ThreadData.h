@@ -19,9 +19,14 @@ public:
 
     void setToClose();
 
+    const string &getRoomName() const;
+
+    void setRoomName(const string &roomName);
+
 private:
     int connectionSocketDescriptor;
     string threadMessage;
+    string roomName="";
     bool toClose = false;
 
 };
