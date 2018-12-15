@@ -91,7 +91,6 @@ class SelectRoomView extends React.Component {
 
     onOpen() {
         console.log("Open ws");
-        localStorage.setItem("WebSocket", this.refWebsocket);
     }
 
     onClose() {
