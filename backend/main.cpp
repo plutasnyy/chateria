@@ -199,13 +199,20 @@ int main(int argc, char *argv[]) {
     int connectionSocketDescriptor;
     int bindResult;
     int listenResult;
+    int serverPort;
     char reuseAddrVal = 1;
     struct sockaddr_in serverAddress;
+
+    if (argc >= 2) {
+        sscanf(argv[1], "%d", &serverPort);
+    } else {
+        serverPort = SERVER_PORT;
+    }
 
     memset(&serverAddress, 0, sizeof(struct sockaddr));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(SERVER_PORT);
+    serverAddress.sin_port = htons(serverPort);
 
     serverSocketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocketDescriptor < 0) {
