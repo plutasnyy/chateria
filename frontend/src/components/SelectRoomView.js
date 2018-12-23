@@ -115,22 +115,23 @@ class SelectRoomView extends React.Component {
         let websocketUrl = 'ws://' + localStorage.getItem("ip");
         return (
             <div className={'BackgroundImg'}>
-                <Button onClick={this.getRooms}>Get Rooms</Button>
-                <Button onClick={this.goHome}>Go Home</Button>
-                <Form className={'NickNameFormContainer'} onSubmit={this.handleSubmit}>
-                    <Header as='h1' textAlign={'center'}>Hi!</Header>
-                    <div className={'NickNameForm'}>
+                <div className={'NickNameFormContainer'} >
+                    <Form className={'NickNameForm'} onSubmit={this.handleSubmit}>
+                        <Header as='h1' textAlign={'center'}>Hi!</Header>
                         <span>
                             <strong>Select a room to go in: </strong>
                             <Dropdown fluid selection options={options} onChange={this.roomsDropdownOnChange}/>
                         </span>
-                        <Form.Field style={{'marginTop': '16px'}}>
-                            <label> Or create new </label>
-                            <input placeholder={'Please provide the room name'} onChange={this.newRoomLabelOnChange}/>
-                        </Form.Field>
-                        <Button type='submit'>Next</Button>
-                    </div>
-                </Form>
+                            <Form.Field style={{'marginTop': '16px'}}>
+                                <label> Or create new </label>
+                                <input placeholder={'Please provide the room name'}
+                                       onChange={this.newRoomLabelOnChange}/>
+                            </Form.Field>
+                            <Button type='submit'>Next</Button>
+                    </Form>
+                    <Button onClick={this.goHome}>Go Home</Button>
+                    <Button onClick={this.getRooms}>Get Rooms</Button>
+                </div>
                 <Websocket url={websocketUrl} onMessage={this.handleData} onOpen={this.onOpen} onClose={this.onClose}
                            ref={Websocket => {
                                this.refWebsocket = Websocket;

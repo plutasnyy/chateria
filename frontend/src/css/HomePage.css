@@ -8,9 +8,7 @@
     width: 512px;
     height: 512px;
     background: white;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(50%);
     margin: 0 auto;
 
     border-radius: 25px;
