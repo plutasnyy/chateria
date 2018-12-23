@@ -1,9 +1,13 @@
 #include <cstdlib>
 #include <cstring>
-#include <sha.h>
+#include <openssl/sha.h>
 #include <iostream>
 #include "Base64.h"
 #include "WebsocketContent.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
 
 using namespace std;
 
@@ -129,3 +133,5 @@ string encodeAcceptKey(string acceptKey) {
     string encodedData = base64_encode(&myData[0], static_cast<unsigned int>(myData.size()));
     return encodedData;
 }
+
+#pragma GCC diagnostic pop

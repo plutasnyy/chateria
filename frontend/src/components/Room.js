@@ -92,7 +92,7 @@ class Room extends React.Component {
     }
 
     render() {
-        let websocketUrl = 'ws://localhost:8000/ws/chat/' + this.props.match.params.roomID + '/';
+        let websocketUrl = 'ws://' + localStorage.getItem('ip') + '/ws/chat/' + this.props.match.params.roomID + '/';
         return (
             <div className={'BackgroundImg'}>
                 <div className={'RoomContainer'}>

@@ -1,6 +1,7 @@
 #ifndef BACKEND_WEBSOCKETCONTENT_H
 #define BACKEND_WEBSOCKETCONTENT_H
 
+
 #include <string>
 
 using namespace std;
@@ -13,5 +14,6 @@ int websocketSetContent(const char *data, int dataLength, unsigned char *dst, co
 int websocketGetContent(const char *data, int data_length, unsigned char *dst, const unsigned int dst_len);
 
 string encodeAcceptKey(string acceptKey);
+
 
 #endif //BACKEND_WEBSOCKETCONTENT_H

@@ -17,7 +17,7 @@
 #include <time.h>
 #include <sstream>
 #include <iostream>
-#include <sha.h>
+#include <openssl/sha.h>
 #include <bits/stdc++.h>
 #include <stddef.h>
 #include "ThreadData.h"
@@ -125,7 +125,7 @@ void processThreadMessage(string threadMessage, ThreadData &threadData) {
 
 string getMessageFromEncodedBuffer(char *readMessageBuffer) {
     unsigned char *encryptedIncommingMessageBuffer = reinterpret_cast<unsigned char *>(new char[BUF_SIZE]);
-    memset(encryptedIncommingMessageBuffer, 0, sizeof encryptedIncommingMessageBuffer);
+    memset(encryptedIncommingMessageBuffer, 0, BUF_SIZE);
     websocketGetContent(readMessageBuffer, BUF_SIZE, encryptedIncommingMessageBuffer, BUF_SIZE);
     string decodedMessage(reinterpret_cast<char *>(encryptedIncommingMessageBuffer));
     int size = 0;

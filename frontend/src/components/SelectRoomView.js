@@ -112,7 +112,7 @@ class SelectRoomView extends React.Component {
     }
 
     render() {
-        let websocketUrl = 'ws://localhost:8000'; // localStorage.getItem("ip");
+        let websocketUrl = 'ws://' + localStorage.getItem("ip");
         return (
             <div className={'BackgroundImg'}>
                 <Button onClick={this.getRooms}>Get Rooms</Button>
